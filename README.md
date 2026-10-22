@@ -1,10 +1,39 @@
+<div align="center">
+
 # tplink-router
 
-`tplink_router` is a Python library for TP-Link routers; `tpctl` is the CLI built on it.
+**See, diagnose and safely change your TP-Link mesh from the command line, or let an AI agent do it.**
 
-A Claude Code plugin plus the `tpctl` CLI and `tplink_router` Python library for TP-Link routers with the current web UI (Archer BE/AX family) and their EasyMesh satellites. Agents and humans share the same tool. At a terminal you get tables and trees. When piped or called by an agent you get line-oriented `key=value` records. `--format human|records|json` picks one explicitly. Every failure is a structured error, and writes support dry-run, no-op skip, snapshot and verify.
+[![test](https://github.com/vika2603/tplink-router/actions/workflows/test.yml/badge.svg)](https://github.com/vika2603/tplink-router/actions/workflows/test.yml)
+[![license: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
+![python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 
-Verified on Archer BE805 with EB431v satellites. Other models are handled through capability detection (`tpctl capabilities`). Features a model lacks exit with code 8 instead of failing unpredictably.
+`tpctl` CLI · `tplink_router` Python library · Claude Code plugin
+
+</div>
+
+One command tells you how the whole network is doing and what to fix first:
+
+```console
+$ tpctl overview
+verdict status=warn errors=0 warnings=1 headline="WEAK_BACKHAUL:Basement" fix_first=WEAK_BACKHAUL:Basement
+internet v4=8.2ms v6=7.9ms loss=0%,0% grade=good,good
+node name=Basement uplink=Main backhaul=wifi backhaul_grade=poor backhaul_signal=-79dBm backhaul_link=520Mbps devices_behind=5
+node name=Upstairs uplink=Main backhaul=wifi backhaul_grade=good backhaul_signal=-60dBm backhaul_link=1729Mbps devices=8
+issue level=warn code=WEAK_BACKHAUL subject=Basement hint="Ethernet backhaul, or move it closer to Main"
+```
+
+- **Diagnosis, not just numbers:** every reading is graded and every problem comes with a cause and a fix. Which satellite
+  is the bottleneck, whether a slow phone is its own Wi-Fi hop, the mesh or the ISP (`tpctl net ping --device @weakest`),
+  who roams too much and whether a node outage caused it, what changed today.
+- **Safe changes:** anything that drops connectivity prints a plan first (who drops, for how long, the risks in *your*
+  topology) and runs only with `--yes`; every write takes a snapshot first and is verified afterwards.
+- **One tool for people and agents:** tables at a terminal, `key=value` records when piped or called by an agent,
+  `--json` for scripts, structured errors with exit codes. Wi-Fi, mesh, DHCP, NAT, QoS and speed limits, parental
+  controls, schedules, firmware, backups and a speed test: [what's covered](skills/tplink-router/references/coverage.md).
+
+Verified on an Archer BE805 with EB431v satellites; other models are handled through capability detection
+(`tpctl capabilities`), and features a model lacks exit with code 8 instead of failing unpredictably.
 
 ## Install
 
