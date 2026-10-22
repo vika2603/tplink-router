@@ -11,7 +11,13 @@ Verified on Archer BE805 with EB431v satellites. Other models are handled throug
 Requires Python 3.11+.
 
 - **CLI + library:** `uv tool install git+https://github.com/vika2603/tplink-router` (or `pipx install git+https://github.com/vika2603/tplink-router`).
-- **As a Claude Code plugin:** clone the repo and run `claude --plugin-dir <clone>`. `bin/tpctl` lands on Claude's PATH and builds its environment with [uv](https://docs.astral.sh/uv/) on first use; the agent-facing guide is `skills/tplink-router/SKILL.md`.
+- **As a Claude Code plugin:** in Claude Code run
+
+  ```
+  /plugin install tplink-router --marketplace vika2603/tplink-router
+  ```
+
+  (older Claude Code: `/plugin marketplace add vika2603/tplink-router`, then `/plugin install tplink-router@tplink-router`). Or clone the repo and run `claude --plugin-dir <clone>`. `bin/tpctl` lands on Claude's PATH and builds its environment with [uv](https://docs.astral.sh/uv/) on first use; the agent-facing guide is `skills/tplink-router/SKILL.md`.
 - **From a clone:** `uv sync && uv run tpctl --help`; tests: `uv run pytest`.
 
 Then run:
