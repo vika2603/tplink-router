@@ -1,6 +1,6 @@
 <div align="center">
 
-# tplink-router
+# TP-Link Router
 
 **See, diagnose and safely change your TP-Link mesh from the command line, or let an AI agent do it.**
 
@@ -8,7 +8,7 @@
 [![license: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
 ![python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 
-`tpctl` CLI · `tplink_router` Python library · Claude Code plugin
+`tpctl` CLI · `tplink_router` Python library · Claude Code plugin · `uv tool install git+https://github.com/vika2603/tplink-router`
 
 </div>
 
@@ -109,3 +109,4 @@ pages tpctl covers. Use at your own risk: writes that drop connectivity always n
 
 GPL-3.0-or-later (it builds on [tplinkrouterc6u](https://github.com/AlexandrErohin/TP-Link-Archer-C6U), GPLv3+).
 
+TP-Link is a trademark of TP-Link Systems Inc. This is an independent, unofficial project, not affiliated with or endorsed by TP-Link.
