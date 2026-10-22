@@ -1530,3 +1530,38 @@ def test_auth_set_host_cli(cli_fake, capsys):
     assert run("auth", "set-host", "192.168.1.1", "--no-verify") == 0
     assert load_settings()["host"] == "http://192.168.1.1"
     assert "host saved=http://192.168.1.1" in capsys.readouterr().out
+
+
+def test_password_store_without_macos_keychain(monkeypatch, tmp_path):
+    """Linux/Windows have no `security` binary: tpctl must fall back to the 0600 file, not crash."""
+    import os
+    import shutil
+    from tplink_router.config import Config
+    monkeypatch.setattr(shutil, "which", lambda name: None)
+    cfg = Config(config_dir=tmp_path)
+    assert cfg.password_source() is None
+    assert cfg.store_password("s3cret-pw") == "file"            # keychain asked for, file used
+    f = tmp_path / "password"
+    assert oct(os.stat(f).st_mode & 0o777) == "0o600"
+    assert cfg.password_source() == "file" and cfg.resolve_password() == "s3cret-pw"
+
+
+def test_terminal_cmd_points_at_the_plugin_launcher(monkeypatch, tmp_path):
+    """In the plugin, `tpctl` is only on Claude's PATH: hints must give a command the user's own shell can run."""
+    from tplink_router.cli._ctx import terminal_cmd
+    launcher = tmp_path / "plug in" / "bin" / "tpctl"         # a space, to check quoting
+    launcher.parent.mkdir(parents=True)
+    launcher.write_text("#!/bin/sh\n")
+    monkeypatch.setenv("TPCTL_LAUNCHER", str(launcher))
+    assert terminal_cmd("auth set-password") == f"'{launcher}' auth set-password"
+    monkeypatch.delenv("TPCTL_LAUNCHER")
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(launcher.parents[1]))
+    assert terminal_cmd("auth status").endswith("/bin/tpctl' auth status")
+
+
+def test_auth_failed_hint_gives_a_terminal_command(monkeypatch):
+    from tplink_router.cli._errors import record_for
+    from tplink_router.errors import AuthError
+    monkeypatch.setenv("TPCTL_LAUNCHER", "/nonexistent")       # not there: falls back to tpctl / this executable
+    rec, code = record_for(AuthError("no router password"))
+    assert code == 3 and "auth set-password" in rec["hint"] and "in a terminal" in rec["hint"]

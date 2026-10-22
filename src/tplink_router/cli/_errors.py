@@ -21,6 +21,14 @@ EXIT = {"ok": 0, "issues": 1, "usage": 2, "auth": 3, "confirm": 4, "router": 5, 
         "unsupported": 8, "internal": 10, "interrupted": 130}
 
 
+def _auth_hint() -> str:
+    """How to give tpctl the password without it passing through the chat: a command for the user's own terminal."""
+    from ._ctx import terminal_cmd
+    return (f"no or wrong router password: ask the user to run `{terminal_cmd('auth set-password')}` in a terminal "
+            "(in the Claude Code CLI: `! tpctl auth set-password`); it prompts, verifies and stores it. If it was just "
+            "wrong, wait ~1 min before retrying (the router throttles logins)")
+
+
 def _subcommands(ctx: click.Context | None) -> list[str]:
     cmd = getattr(ctx, "command", None)
     if isinstance(cmd, click.Group):
@@ -115,21 +123,22 @@ def record_for(exc: BaseException) -> tuple[dict, int]:
                 "hint": "third-party speed server issue, not the router; latency check: `tpctl net ping --no-mesh`"}, EXIT["router"]
     if isinstance(exc, UnreachableError):
         return {"code": "UNREACHABLE", "detail": str(exc), "retryable": True,
-                "hint": "check TPLINK_HOST (tpctl auth status) and that this machine is on the router's LAN"}, EXIT["router"]
+                "hint": "router address: `tpctl auth status` (host, host_source); save the right one with "
+                        "`tpctl auth set-host <gateway-ip>`; and check this machine is on the router's LAN"}, EXIT["router"]
     if isinstance(exc, UnsupportedError):
         return {"code": "UNSUPPORTED", "detail": str(exc), "retryable": False,
                 "hint": "tpctl capabilities  (what this model supports)"}, EXIT["unsupported"]
     if isinstance(exc, AuthError):
         return {"code": "AUTH_FAILED", "detail": str(exc), "retryable": True,
-                "hint": "check password source (TPLINK_PASSWORD / Keychain 'tplink-router' / ~/.config/tplink-router/password); "
-                        "if it was just wrong, wait ~1 min before retrying (router throttles logins)"}, EXIT["auth"]
+                "hint": _auth_hint()}, EXIT["auth"]
     if isinstance(exc, RouterError):
         return {"code": "ROUTER_REJECTED", "detail": str(exc), "endpoint": exc.endpoint, "op": exc.op,
                 "fields": exc.fields, "retryable": False,
                 "hint": "verify endpoint/op in references/api.md; try `tpctl api get <endpoint> --op load`"}, EXIT["router"]
     if isinstance(exc, (ConnectionError, TimeoutError, OSError)):
         return {"code": "UNREACHABLE", "detail": str(exc)[-300:], "retryable": True,
-                "hint": "router reachable? `ping 192.168.0.1` / check TPLINK_HOST"}, EXIT["router"]
+                "hint": "router reachable? `tpctl auth status` shows the address in use; `tpctl auth set-host <ip>` "
+                        "saves another"}, EXIT["router"]
     if isinstance(exc, TplinkError):
         return {"code": "TPLINK_ERROR", "detail": str(exc)}, EXIT["router"]
     return {"code": "INTERNAL", "detail": f"{type(exc).__name__}: {str(exc)[-300:]}",

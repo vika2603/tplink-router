@@ -23,7 +23,7 @@ Requires Python 3.11+.
 Then run:
 
 ```sh
-tpctl auth set-password          # prompts; stored in macOS Keychain, else ~/.config/tplink-router/password (0600)
+tpctl auth set-password          # prompts, verifies; macOS Keychain, elsewhere ~/.config/tplink-router/password (0600)
 tpctl auth set-host 192.168.1.1   # only if your router isn't at http://192.168.0.1 (saved; TPLINK_HOST overrides)
 tpctl capabilities               # what your model supports
 tpctl overview                   # verdict, changes, status, Wi-Fi, mesh, devices, issues

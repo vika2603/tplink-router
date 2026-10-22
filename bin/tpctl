@@ -9,4 +9,6 @@ if ! command -v uv >/dev/null 2>&1; then
   echo 'error code=MISSING_DEPENDENCY exit=10 detail="uv not found on PATH" hint="install uv: https://docs.astral.sh/uv/ (e.g. brew install uv)"' >&2
   exit 10
 fi
+# lets tpctl print commands the user can paste into their own terminal, where this launcher isn't on PATH
+export TPCTL_LAUNCHER="$root/bin/tpctl"
 exec uv run --quiet --frozen --project "$root" tpctl "$@"

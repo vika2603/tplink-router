@@ -118,6 +118,28 @@ def json_option(f):
                         help="Output: human (default on a terminal), records (key=value lines, default when piped), json.")(f)
 
 
+def terminal_cmd(args: str) -> str:
+    """A tpctl command the user can paste into ANY terminal on this machine (system Terminal, not only Claude's).
+
+    Inside the Claude Code plugin, `tpctl` is on Claude's PATH only, so a plain `tpctl ...` fails in the user's own
+    shell: give the plugin's launcher by absolute path then. Installed with `uv tool install`/pipx it is on PATH.
+    """
+    import shlex
+    import shutil
+    launcher = os.environ.get("TPCTL_LAUNCHER")      # set by the plugin's bin/tpctl
+    root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if launcher and os.path.exists(launcher):
+        exe = launcher
+    elif root and os.path.exists(os.path.join(root, "bin", "tpctl")):
+        exe = os.path.join(root, "bin", "tpctl")
+    else:
+        exe = os.path.realpath(sys.argv[0]) if sys.argv and os.path.isabs(sys.argv[0]) else "tpctl"
+        on_path = shutil.which("tpctl")
+        if on_path and os.path.realpath(on_path) == exe:
+            exe = "tpctl"                     # what the user's shell finds anyway: keep it short
+    return f"{shlex.quote(exe)} {args}"
+
+
 def parse_kv(pairs: tuple[str, ...]) -> dict:
     out = {}
     for p in pairs:

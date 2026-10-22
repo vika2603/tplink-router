@@ -7,7 +7,7 @@ from .. import output as o
 from ..client import connect
 from ..config import Config, load_settings, save_settings
 from ..session import SessionStore
-from ._ctx import json_option, pass_state
+from ._ctx import json_option, pass_state, terminal_cmd
 
 
 @click.group("auth", short_help='Router password and the saved login session.')
@@ -30,6 +30,10 @@ def status(st, check):
         d["check"] = {"ok": True, "session_source": r.session_source, "relogins": r.relogins}
     d["host_source"] = host_source()
     lines = [o.line("auth", host=d["host"], host_source=d["host_source"], password_source=d["password_source"] or "none")]
+    if not d["password_source"]:
+        d["set_password_cmd"] = terminal_cmd("auth set-password")
+        lines.append(o.line("next", run=d["set_password_cmd"],
+                            note="the user runs this in their own terminal (Claude Code CLI: `! tpctl auth set-password`)"))
     lines.append(o.line("session", **({k: (f"{v}s" if k.endswith("_s") or k.endswith("_ago") else v) for k, v in info.items()}
                                      if info else {"state": "none"})))
     if check:

@@ -1,6 +1,7 @@
 """Where to find the router, its password, and local state."""
 import json
 import os
+import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -9,6 +10,14 @@ from .errors import AuthError
 
 KEYCHAIN_SERVICE = "tplink-router"
 DEFAULT_HOST = "http://192.168.0.1"
+
+
+def _keychain(*args: str) -> subprocess.CompletedProcess | None:
+    """Run macOS `security` with these args; None where it doesn't exist (Linux, Windows), so callers fall back to
+    the 0600 password file instead of crashing."""
+    if not shutil.which("security"):
+        return None
+    return subprocess.run(["security", *args], capture_output=True, text=True)
 
 
 def _config_dir() -> Path:
@@ -56,17 +65,16 @@ class Config:
             return "arg"
         if os.environ.get("TPLINK_PASSWORD"):
             return "env"
-        r = subprocess.run(["security", "find-generic-password", "-s", KEYCHAIN_SERVICE], capture_output=True)
-        if r.returncode == 0:
+        r = _keychain("find-generic-password", "-s", KEYCHAIN_SERVICE)
+        if r is not None and r.returncode == 0:
             return "keychain"
         return "file" if (self.config_dir / "password").exists() else None
 
     def store_password(self, password: str, prefer: str = "keychain") -> str:
         """Persist the password: macOS Keychain if possible, else <config_dir>/password (0600). Returns where."""
         if prefer == "keychain":
-            r = subprocess.run(["security", "add-generic-password", "-U", "-s", KEYCHAIN_SERVICE, "-a", "admin",
-                                "-w", password], capture_output=True, text=True)
-            if r.returncode == 0:
+            r = _keychain("add-generic-password", "-U", "-s", KEYCHAIN_SERVICE, "-a", "admin", "-w", password)
+            if r is not None and r.returncode == 0:
                 return "keychain"
         f = self.config_dir / "password"
         f.parent.mkdir(parents=True, exist_ok=True)
@@ -81,9 +89,8 @@ class Config:
             return self.password
         if pw := os.environ.get("TPLINK_PASSWORD"):
             return pw
-        r = subprocess.run(["security", "find-generic-password", "-s", KEYCHAIN_SERVICE, "-w"],
-                           capture_output=True, text=True)
-        if r.returncode == 0 and r.stdout.strip():
+        r = _keychain("find-generic-password", "-s", KEYCHAIN_SERVICE, "-w")
+        if r is not None and r.returncode == 0 and r.stdout.strip():
             return r.stdout.strip()
         f = self.config_dir / "password"
         if f.exists():
