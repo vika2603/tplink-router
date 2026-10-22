@@ -1,5 +1,7 @@
 # tplink-router
 
+`tplink_router` is a Python library for TP-Link routers; `tpctl` is the CLI built on it.
+
 A Claude Code plugin plus the `tpctl` CLI and `tplink_router` Python library for TP-Link routers with the current web UI (Archer BE/AX family) and their EasyMesh satellites. Agents and humans share the same tool. At a terminal you get tables and trees. When piped or called by an agent you get line-oriented `key=value` records. `--format human|records|json` picks one explicitly. Every failure is a structured error, and writes support dry-run, no-op skip, snapshot and verify.
 
 Verified on Archer BE805 with EB431v satellites. Other models are handled through capability detection (`tpctl capabilities`). Features a model lacks exit with code 8 instead of failing unpredictably.
@@ -8,7 +10,7 @@ Verified on Archer BE805 with EB431v satellites. Other models are handled throug
 
 Requires Python 3.11+.
 
-- **CLI + library:** `uv tool install git+https://github.com/vika2603/tpctl` (or `pipx install git+https://github.com/vika2603/tpctl`).
+- **CLI + library:** `uv tool install git+https://github.com/vika2603/tplink-router` (or `pipx install git+https://github.com/vika2603/tplink-router`).
 - **As a Claude Code plugin:** clone the repo and run `claude --plugin-dir <clone>`. `bin/tpctl` lands on Claude's PATH and builds its environment with [uv](https://docs.astral.sh/uv/) on first use; the agent-facing guide is `skills/tplink-router/SKILL.md`.
 - **From a clone:** `uv sync && uv run tpctl --help`; tests: `uv run pytest`.
 

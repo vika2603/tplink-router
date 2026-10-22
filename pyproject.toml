@@ -17,8 +17,8 @@ classifiers = [
 dependencies = ["tplinkrouterc6u>=5.37", "click>=8.1"]
 
 [project.urls]
-Homepage = "https://github.com/vika2603/tpctl"
-Issues = "https://github.com/vika2603/tpctl/issues"
+Homepage = "https://github.com/vika2603/tplink-router"
+Issues = "https://github.com/vika2603/tplink-router/issues"
 
 [project.scripts]
 tpctl = "tplink_router.cli:main"
