@@ -5,11 +5,15 @@ description: Inspect and change a TP-Link router (current web UI, e.g. Archer BE
 
 # tpctl — TP-Link router + EasyMesh control
 
-Doc version 2026-10-22.60 (`tpctl --version` for the code).
+Doc version 2026-10-23.1 (`tpctl --version` for the code).
 
 `tpctl` is on PATH via this plugin's `bin/` (it runs `${CLAUDE_PLUGIN_ROOT}` through `uv`; needs `uv` installed). Library code: `${CLAUDE_PLUGIN_ROOT}/src/tplink_router/`. Endpoint reference: `${CLAUDE_PLUGIN_ROOT}/skills/tplink-router/references/api.md`.
 
-**Setup:** don't pre-check. Run the command you need. Only if it fails with `code=AUTH_FAILED` (exit 3) and `tpctl auth status` shows `password_source=none`, ask the user for the router admin password and run `printf %s "$PW" | tpctl auth set-password --stdin` (the user can also set `TPLINK_PASSWORD` or run `tpctl auth set-password` in a terminal). Non-default router address: `TPLINK_HOST=http://<ip>`. Then `tpctl capabilities` shows what this model supports. Commands for features it lacks exit 8 (`UNSUPPORTED`).
+**Setup (first run):** don't pre-check; run the command you need and fix only what fails:
+- `code=MISSING_DEPENDENCY` (exit 10): the plugin needs [uv](https://docs.astral.sh/uv/); ask the user to install it (e.g. `brew install uv`). Python deps install themselves on the first run.
+- `code=AUTH_FAILED` (exit 3) and `tpctl auth status` shows `password_source=none`: ask the user to run `! tpctl auth set-password` themselves (it prompts, verifies by logging in, stores it in the Keychain or a 0600 file). Only if they prefer to give it to you: `printf %s "$PW" | tpctl auth set-password --stdin`. Never echo or store the password anywhere else.
+- Router unreachable (exit 5) at the default `http://192.168.0.1`: find the gateway (`route -n get default` on macOS, `ip route show default` on Linux) and run `tpctl auth set-host <gateway-ip>` (it checks the address answers, then saves it for every later run; `$TPLINK_HOST` overrides it for one run).
+- Check: `tpctl auth status --check` (`host_source=env|config|default`, session ok); `tpctl capabilities` shows what this model supports. Commands for features it lacks exit 8 (`UNSUPPORTED`).
 
 **Site notes:** `~/.config/tplink-router/site.md`, if it exists, holds this household's ISP, topology, known weak spots and past changes. Read it in the same call as your first command (`cat ~/.config/tplink-router/site.md 2>/dev/null; tpctl overview`), once per conversation. Update it after any change. Create it after the first overview if the user agrees. It is private and never part of the plugin.
 

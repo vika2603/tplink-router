@@ -24,7 +24,7 @@ Then run:
 
 ```sh
 tpctl auth set-password          # prompts; stored in macOS Keychain, else ~/.config/tplink-router/password (0600)
-TPLINK_HOST=http://192.168.0.1   # only if your router isn't at the default address
+tpctl auth set-host 192.168.1.1   # only if your router isn't at http://192.168.0.1 (saved; TPLINK_HOST overrides)
 tpctl capabilities               # what your model supports
 tpctl overview                   # verdict, changes, status, Wi-Fi, mesh, devices, issues
 ```
@@ -56,6 +56,7 @@ tpctl overview                   # verdict, changes, status, Wi-Fi, mesh, device
 | Path | What |
 |---|---|
 | `~/.config/tplink-router/password` | password fallback when the Keychain isn't used (0600) |
+| `~/.config/tplink-router/config.json` | saved router address (`tpctl auth set-host`) |
 | `~/.config/tplink-router/aliases.json` | your friendly device names |
 | `~/.config/tplink-router/site.md` | optional notes about your network for the agent |
 | `~/.local/state/tplink-router/` | session, capabilities cache, observations + event log, snapshots (`--no-track` / `TPCTL_NO_TRACK=1` to skip) |

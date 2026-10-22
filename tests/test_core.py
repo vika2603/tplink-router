@@ -1501,3 +1501,32 @@ def test_implausible_signal_is_maybe_stale():
     d2 = Device(label="ph", name="ph", ip="", mac="p", band="5G", node="N", signal_dbm=-86, signal_grade="bad",
                 link_rx_mbps=150, link_tx_mbps=20)
     assert not d2.signal_stale
+
+
+def test_host_precedence_env_then_saved_then_default(monkeypatch):
+    from tplink_router.config import DEFAULT_HOST, Config, save_settings
+    assert Config().host == DEFAULT_HOST                       # nothing saved (conftest gives a temp config dir)
+    save_settings({"host": "http://192.168.1.1"})
+    assert Config().host == "http://192.168.1.1"               # what `tpctl auth set-host` saved
+    monkeypatch.setenv("TPLINK_HOST", "http://10.0.0.1")
+    assert Config().host == "http://10.0.0.1"                  # env still wins for one run
+
+
+def test_save_settings_merges_and_survives_garbage(tmp_path):
+    from tplink_router.config import load_settings, save_settings
+    (tmp_path / "config.json").write_text("not json")
+    assert load_settings(tmp_path) == {}                       # unreadable file = no settings, not a crash
+    save_settings({"host": "http://a"}, tmp_path)
+    save_settings({"other": 1}, tmp_path)
+    assert load_settings(tmp_path) == {"host": "http://a", "other": 1}
+
+
+def test_auth_set_host_cli(cli_fake, capsys):
+    from tplink_router.cli.auth import normalize_host
+    from tplink_router.config import load_settings
+    assert normalize_host(" 192.168.1.1/ ") == "http://192.168.1.1"
+    assert normalize_host("https://router.lan") == "https://router.lan"
+    run, r, lib = cli_fake
+    assert run("auth", "set-host", "192.168.1.1", "--no-verify") == 0
+    assert load_settings()["host"] == "http://192.168.1.1"
+    assert "host saved=http://192.168.1.1" in capsys.readouterr().out

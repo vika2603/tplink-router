@@ -5,7 +5,7 @@ import click
 from .. import human as h
 from .. import output as o
 from ..client import connect
-from ..config import Config
+from ..config import Config, load_settings, save_settings
 from ..session import SessionStore
 from ._ctx import json_option, pass_state
 
@@ -28,7 +28,8 @@ def status(st, check):
         r = st.r
         r.call("admin/status?form=internet")
         d["check"] = {"ok": True, "session_source": r.session_source, "relogins": r.relogins}
-    lines = [o.line("auth", host=d["host"], password_source=d["password_source"] or "none")]
+    d["host_source"] = host_source()
+    lines = [o.line("auth", host=d["host"], host_source=d["host_source"], password_source=d["password_source"] or "none")]
     lines.append(o.line("session", **({k: (f"{v}s" if k.endswith("_s") or k.endswith("_ago") else v) for k, v in info.items()}
                                      if info else {"state": "none"})))
     if check:
@@ -89,6 +90,55 @@ def set_password(st, from_stdin, store, no_verify):
     st.out({"stored": where, "verified": not no_verify},
            [o.line("password", stored=where, verified="no" if no_verify else "yes",
                    note="keychain unavailable here, used 0600 file" if store == "keychain" and where == "file" else None)])
+
+
+def normalize_host(value: str) -> str:
+    """'192.168.1.1' / 'http://192.168.1.1/' -> 'http://192.168.1.1' (the form Config.host uses)."""
+    v = value.strip().rstrip("/")
+    if not v:
+        raise click.UsageError("empty router address")
+    return v if "://" in v else f"http://{v}"
+
+
+def _reachable(url: str, timeout: float = 5.0) -> str | None:
+    """None when the router's web UI answers at `url`, else a short reason. No login needed (no password yet)."""
+    import requests
+    try:
+        requests.get(url, timeout=timeout, verify=False)
+    except requests.RequestException as e:
+        return type(e).__name__
+    return None
+
+
+@auth.command("set-host")
+@click.argument("address", metavar="URL|IP")
+@click.option("--no-verify", is_flag=True, help="Save without checking that the address answers.")
+@json_option
+@pass_state
+def set_host(st, address, no_verify):
+    """Save the router address for every later run (when it isn't the default http://192.168.0.1).
+
+    \b
+      tpctl auth set-host 192.168.1.1
+    Stored in ~/.config/tplink-router/config.json; $TPLINK_HOST still overrides it for one run.
+    """
+    import os
+    url = normalize_host(address)
+    if not no_verify and (why := _reachable(url)):
+        raise click.UsageError(f"{url} doesn't answer ({why}); check the address, or pass --no-verify to save anyway")
+    path = save_settings({"host": url})
+    env = os.environ.get("TPLINK_HOST")
+    st.out({"host": url, "saved": str(path), "verified": not no_verify},
+           [o.line("host", saved=url, file=str(path), verified="no" if no_verify else "yes",
+                   note=f"TPLINK_HOST={env} is set and overrides it in this shell" if env and env != url else None)])
+
+
+def host_source() -> str:
+    """Where Config.host comes from: env | config | default."""
+    import os
+    if os.environ.get("TPLINK_HOST"):
+        return "env"
+    return "config" if load_settings().get("host") else "default"
 
 
 COMMANDS = [auth]

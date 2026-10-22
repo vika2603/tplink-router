@@ -58,12 +58,13 @@ RISK = {
     "py": ("write", "arbitrary code with a logged-in session"),
     "net speed": ("read", "downloads ~100 MB from the internet on this machine"),
     "auth set-password": ("write", "stores the password (Keychain or 0600 file)"),
+    "auth set-host": ("write", "saves the router address in ~/.config/tplink-router/config.json (local file only)"),
     "auth logout": ("write", "ends the router session"),
     "auth login": ("write", "replaces the router session"),
 }
 GLOBAL_PARAMS = {"help", "fmt", "detail", "fields", "no_track_global"}   # accepted by every command; listed once, not per command
 GLOBAL_OPTIONS = "-o/--format human|records|json · --json · -v/--detail · --fields K1,K2 · --no-track · -h/--help"
-NEEDS_ROUTER_FREE = {"commands", "schema", "snapshot list", "snapshot diff", "api endpoints", "devices alias list", "auth status", "events", "devices roaming"}
+NEEDS_ROUTER_FREE = {"commands", "schema", "snapshot list", "snapshot diff", "api endpoints", "devices alias list", "auth status", "auth set-host", "events", "devices roaming"}
 RISK.setdefault("observe", ("write", "appends to the local event log only"))
 
 
@@ -267,6 +268,8 @@ RECORDS = {
     "endpoint/endpoints": "api endpoints: endpoint path ops live",
     "value": "api get: value key=… (router-native fields)",
     "login/logout/password": "auth login/logout/set-password results",
+    "host": "auth set-host: saved (URL) file verified [note when $TPLINK_HOST overrides it]; auth status also prints "
+            "host_source=env|config|default",
     # -- meta (this command) --
     "schema/format/time/record/grade/grades/exit_codes/library/env/global_options/record_vs_attribute/command":
         "tpctl schema / tpctl commands output itself",
