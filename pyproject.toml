@@ -1,0 +1,38 @@
+[project]
+name = "tplink-router"
+version = "0.4.0"
+description = "Agent- and human-friendly CLI + Python library for TP-Link routers (current web UI) and EasyMesh"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+keywords = ["tp-link", "router", "wifi", "easymesh", "mesh", "cli", "network"]
+classifiers = [
+    "Environment :: Console",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: System :: Networking",
+]
+dependencies = ["tplinkrouterc6u>=5.37", "click>=8.1"]
+
+[project.urls]
+Homepage = "https://github.com/vika2603/tpctl"
+Issues = "https://github.com/vika2603/tpctl/issues"
+
+[project.scripts]
+tpctl = "tplink_router.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tplink_router"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]

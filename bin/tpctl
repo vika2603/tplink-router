@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Plugin launcher: run tpctl from this plugin's own source through uv, which creates/syncs the
+# environment on first use. Plugin bin/ is on Claude's PATH while the plugin is enabled.
+set -euo pipefail
+self="${BASH_SOURCE[0]}"
+self="$(readlink -f "$self" 2>/dev/null || echo "$self")"
+root="$(cd "$(dirname "$self")/.." && pwd)"
+if ! command -v uv >/dev/null 2>&1; then
+  echo 'error code=MISSING_DEPENDENCY exit=10 detail="uv not found on PATH" hint="install uv: https://docs.astral.sh/uv/ (e.g. brew install uv)"' >&2
+  exit 10
+fi
+exec uv run --quiet --frozen --project "$root" tpctl "$@"
